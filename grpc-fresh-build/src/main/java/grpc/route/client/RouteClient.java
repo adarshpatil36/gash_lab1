@@ -4,8 +4,7 @@ import com.google.protobuf.ByteString;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import route.Route;
-import route.RouteServiceGrpc;
+import route.*;
 
 import java.io.*;
 
@@ -32,25 +31,42 @@ public class RouteClient {
 	public static void main(String[] args) throws IOException {
 		ManagedChannel ch = ManagedChannelBuilder.forAddress("localhost", RouteClient.port).usePlaintext().build();
 
-		RouteServiceGrpc.RouteServiceBlockingStub stub = RouteServiceGrpc.newBlockingStub(ch);
-		OutputStream os = new FileOutputStream("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/client/newFile.txt");
-		int I = 1;
-		for (int i = 0; i < I; i++) {
-			Route.Builder bld = Route.newBuilder();
-			bld.setId(i);
-			bld.setOrigin(RouteClient.clientID);
-			bld.setPath("/to/somewhere");
+		RequestServiceGrpc.RequestServiceBlockingStub stub = RequestServiceGrpc.newBlockingStub(ch);
+//		RouteServiceGrpc.RouteServiceBlockingStub stub = RouteServiceGrpc.newBlockingStub(ch);
 
-			byte[] hello = "hello".getBytes();
-			bld.setPayload(ByteString.copyFrom(hello));
+		int I = 1;
+		int RTT_Time = 0;
+		for (int i = 0; i < I; i++) {
+			FileOutputStream os = new FileOutputStream("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/client/newFile.txt");
+			Chunk_requested.Builder bld = Chunk_requested.newBuilder();
+			bld.setResponseTime(RTT_Time);
+//			Route.Builder bld = Route.newBuilder();
+//			bld.setId(i);
+//			bld.setOrigin(RouteClient.clientID);
+//			bld.setPath("/to/somewhere");
+//			byte[] hello = "hello".getBytes();
+//			bld.setPayload(ByteString.copyFrom(hello));
+//
+//			Route r = stub.request(bld.build());
+
+			bld.setOrigin(4);
+			bld.setDestination(3);
+			bld.setPath("tttt");
+			bld.setChunkSize(8);
+			bld.setOffset(4);
 
 			// blocking!
-			Route r = stub.request(bld.build());
+			Chunk_response r = stub.request(bld.build());
+
+			System.out.println( r.getPayload() + ", payload: " + r.getPayload().toStringUtf8());
 
 			// TODO response handling
 			String payload = new String(r.getPayload().toByteArray());
-			System.out.println("reply: " + r.getId() + ", from: " + r.getOrigin() + ", payload: " + payload);
-			os.write(payload.getBytes());
+			System.out.println(", payload: " + payload);
+			os.write(r.getPayload().toByteArray());
+			os.flush();
+			os.close();
+			System.out.println( r.getPayload().toByteArray() + ", -- payload: ");
 		}
 		ch.shutdown();
 	}

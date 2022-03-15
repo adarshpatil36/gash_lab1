@@ -3,17 +3,16 @@ package grpc.route.server;
 import java.io.*;
 import java.util.Properties;
 
-import java.util.Scanner; // Import the Scanner class to read text files
-
 
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import route.RouteServiceGrpc.RouteServiceImplBase;
+import route.Chunk_response;
+import route.RequestServiceGrpc;
 
-public class RouteServerImpl extends RouteServiceImplBase {
+public class RouteServerImpl extends RequestServiceGrpc.RequestServiceImplBase {
 	private Server svr;
 
 	private static Properties getConfiguration(final File path) throws IOException {
@@ -45,7 +44,7 @@ public class RouteServerImpl extends RouteServiceImplBase {
 	 * @param payload
 	 * @return
 	 */
-	protected ByteString process(route.Route msg) {
+	/*protected ByteString process(route.Route msg) {
 
 		// TODO placeholder
 		String content = new String(msg.getPayload().toByteArray());
@@ -56,7 +55,7 @@ public class RouteServerImpl extends RouteServiceImplBase {
 		byte[] raw = blank.getBytes();
 
 		return ByteString.copyFrom(raw);
-	}
+	}*/
 
 	public static void main(String[] args) throws Exception {
 		// TODO check args!
@@ -99,58 +98,90 @@ public class RouteServerImpl extends RouteServiceImplBase {
 		svr.awaitTermination();
 	}
 
-	@Override
-	public void request(route.Route request, StreamObserver<route.Route> responseObserver) {
+//	@Override
+	public void request(route.Chunk_requested request, StreamObserver<route.Chunk_response> responseObserver) {
 
 		// TODO refactor to use RouteServer to isolate implementation from
 		// transportation
 
-		route.Route.Builder builder = route.Route.newBuilder();
-
+		System.out.println("--- in request");
+		route.Chunk_response.Builder builder = route.Chunk_response.newBuilder();
 		// routing/header information
-		builder.setId(RouteServer.getInstance().getNextMessageID());
-		builder.setOrigin(RouteServer.getInstance().getServerID());
-		builder.setDestination(request.getOrigin());
-		builder.setPath(request.getPath());
+//		builder.setId(RouteServer.getInstance().getNextMessageID());
+//		builder.setOrigin(RouteServer.getInstance().getServerID());
+//		builder.setDestination(request.getOrigin());
+//		builder.setPath(request.getPath());
 
 		// do the work
 //		builder.setPayload(process(request));
 
+
 		try {
 			File myObj = new File("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/server/file");
-			Scanner myReader = new Scanner(myObj);
+//			Scanner myReader = new Scanner(myObj);
 
-			int sizeOfFiles = 45;
+			int sizeOfFiles = 90;
 			byte[] buffer = new byte[sizeOfFiles];
-
-			try(FileInputStream fis = new FileInputStream(myObj);
-			BufferedInputStream bis = new BufferedInputStream(fis)){
-				int bytesAmount = bis.read(buffer);
-				while (bytesAmount > sizeOfFiles) {
+			RandomAccessFile reader = new RandomAccessFile(myObj, "rw");
+			try/*(FileInputStream fis = new FileInputStream(myObj);
+			BufferedInputStream bis = new BufferedInputStream(fis))*/{
+				//int bytesAmount = bis.read(buffer);
+				reader.seek(0);
+				int bytesAmount = reader.read(buffer);
+				int offset =sizeOfFiles;
+				/*while (bytesAmount > sizeOfFiles) {
+					Chunk_response.Builder response = Chunk_response.newBuilder();
 					byte[] smallerChunk = new byte[bytesAmount];
 					System.arraycopy(buffer, 0, smallerChunk, 0, bytesAmount);
-					builder.setPayload(ByteString.copyFrom(smallerChunk));
+
+					response.setOrigin(3);
+					response.setDestination(8);
+					response.setLast(false);
+					response.setPath("wwww");
+
+					response.setOffset(offset);
+					response.setOrigin(request.getOrigin());
+					response.setPayload(ByteString.copyFrom(smallerChunk));
+
+					route.Chunk_response rtn = builder.build();
+
+					responseObserver.onNext(rtn);
+					responseObserver.onCompleted();
 					bytesAmount-=sizeOfFiles;
-//						System.out.println(buffer+" -- "+bytesAmount);
-//						builder.setPayload(ByteString.copyFrom(buffer));
-				}
-				if(bytesAmount < sizeOfFiles){
+					offset += sizeOfFiles;
+				}*/
+				//if(bytesAmount < sizeOfFiles){
+					Chunk_response.Builder response = Chunk_response.newBuilder();
+
 					byte[] smallerChunk = new byte[bytesAmount];
 					System.arraycopy(buffer, 0, smallerChunk, 0, bytesAmount);
-					builder.setPayload(ByteString.copyFrom(smallerChunk));
-				}
+					offset = bytesAmount;
 
+					response.setOrigin(3);
+					response.setDestination(8);
+					response.setLast(false);
+					response.setPath("wwww");
+
+					response.setOffset(offset);
+					response.setOrigin(request.getOrigin());
+
+					System.out.println(" --- "+ bytesAmount+"  --- "+smallerChunk);
+					response.setPayload(ByteString.copyFrom(smallerChunk));
+					System.out.println(response.getPayload().toStringUtf8());
+					route.Chunk_response rtn = response.build();
+
+					responseObserver.onNext(rtn);
+					responseObserver.onCompleted();
+				//}
+				reader.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			myReader.close();
 		} catch (FileNotFoundException e) {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
 		}
 
-		route.Route rtn = builder.build();
-		responseObserver.onNext(rtn);
-		responseObserver.onCompleted();
+
 	}
 }

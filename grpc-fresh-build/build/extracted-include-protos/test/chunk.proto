@@ -1,0 +1,26 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+package route;
+
+service RequestService {
+  rpc request(Chunk_requested) returns (Chunk_response) {}
+}
+
+message Chunk_response {
+  int64 offset = 1;
+  int64 origin = 2;
+  int64 destination = 3;
+  bytes payload = 4;
+  bool last = 5;
+  string path = 6;
+}
+
+message Chunk_requested {
+  optional int64 offset = 1;
+  int64 origin = 2;
+  int64 destination = 3;
+  string path = 4;
+  int64 response_time = 5;
+  int64 chunk_size = 6;
+}
