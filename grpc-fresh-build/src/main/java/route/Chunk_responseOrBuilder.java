@@ -48,4 +48,10 @@ public interface Chunk_responseOrBuilder extends
    */
   com.google.protobuf.ByteString
       getPathBytes();
+
+  /**
+   * <code>int64 chunk_size = 7;</code>
+   * @return The chunkSize.
+   */
+  long getChunkSize();
 }

@@ -7,6 +7,7 @@ import io.grpc.ManagedChannelBuilder;
 import route.*;
 
 import java.io.*;
+import java.sql.Timestamp;
 
 /**
  * copyright 2018, gash
@@ -32,42 +33,51 @@ public class RouteClient {
 		ManagedChannel ch = ManagedChannelBuilder.forAddress("localhost", RouteClient.port).usePlaintext().build();
 
 		RequestServiceGrpc.RequestServiceBlockingStub stub = RequestServiceGrpc.newBlockingStub(ch);
-//		RouteServiceGrpc.RouteServiceBlockingStub stub = RouteServiceGrpc.newBlockingStub(ch);
 
-		int I = 1;
-		int RTT_Time = 0;
-		for (int i = 0; i < I; i++) {
-			FileOutputStream os = new FileOutputStream("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/client/newFile.txt");
+		FileOutputStream os = new FileOutputStream("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/client/newFile");
+
+		int i = 0;
+		long Threshold_RTT = 10;
+		int Chunk_Size = 5;
+		int Threshold_Chunk_Size = 5;
+
+		long RTT_Time = 0;
+		boolean isLast = false;
+		while(!isLast){
 			Chunk_requested.Builder bld = Chunk_requested.newBuilder();
 			bld.setResponseTime(RTT_Time);
-//			Route.Builder bld = Route.newBuilder();
-//			bld.setId(i);
-//			bld.setOrigin(RouteClient.clientID);
-//			bld.setPath("/to/somewhere");
-//			byte[] hello = "hello".getBytes();
-//			bld.setPayload(ByteString.copyFrom(hello));
-//
-//			Route r = stub.request(bld.build());
 
+			Timestamp timestamp1 = new Timestamp(System.currentTimeMillis());
 			bld.setOrigin(4);
+
 			bld.setDestination(3);
 			bld.setPath("tttt");
-			bld.setChunkSize(8);
-			bld.setOffset(4);
+			bld.setChunkSize(Chunk_Size);
+			bld.setOffset(i*5);
 
 			// blocking!
 			Chunk_response r = stub.request(bld.build());
 
-			System.out.println( r.getPayload() + ", payload: " + r.getPayload().toStringUtf8());
+//			System.out.println(" isLast - "+r.getLast());
+			isLast = r.getLast();
+			Timestamp timestamp2 = new Timestamp(System.currentTimeMillis());
+			RTT_Time = timestamp2.getTime() - timestamp1.getTime();
+
+
+			if(RTT_Time > Threshold_RTT){
+				Chunk_Size = Chunk_Size * 2;
+			} else if( Chunk_Size > Threshold_Chunk_Size ){
+				Chunk_Size = Chunk_Size / 2;
+			}
 
 			// TODO response handling
 			String payload = new String(r.getPayload().toByteArray());
 			System.out.println(", payload: " + payload);
 			os.write(r.getPayload().toByteArray());
-			os.flush();
-			os.close();
-			System.out.println( r.getPayload().toByteArray() + ", -- payload: ");
+			i = i + 1;
 		}
+		os.flush();
+		os.close();
 		ch.shutdown();
 	}
 }

@@ -102,56 +102,24 @@ public class RouteServerImpl extends RequestServiceGrpc.RequestServiceImplBase {
 	public void request(route.Chunk_requested request, StreamObserver<route.Chunk_response> responseObserver) {
 
 		// TODO refactor to use RouteServer to isolate implementation from
-		// transportation
-
-		System.out.println("--- in request");
 		route.Chunk_response.Builder builder = route.Chunk_response.newBuilder();
-		// routing/header information
-//		builder.setId(RouteServer.getInstance().getNextMessageID());
-//		builder.setOrigin(RouteServer.getInstance().getServerID());
-//		builder.setDestination(request.getOrigin());
-//		builder.setPath(request.getPath());
-
-		// do the work
-//		builder.setPayload(process(request));
-
 
 		try {
 			File myObj = new File("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/server/file");
-//			Scanner myReader = new Scanner(myObj);
+			int sizeOfFiles = (int) request.getChunkSize();
 
-			int sizeOfFiles = 90;
+			Chunk_response.Builder response = Chunk_response.newBuilder();
+
+//			if(request.getResponseTime() >= 10){
+//				response.setChunkSize(request.getChunkSize() * 2);
+//			}
 			byte[] buffer = new byte[sizeOfFiles];
 			RandomAccessFile reader = new RandomAccessFile(myObj, "rw");
-			try/*(FileInputStream fis = new FileInputStream(myObj);
-			BufferedInputStream bis = new BufferedInputStream(fis))*/{
-				//int bytesAmount = bis.read(buffer);
-				reader.seek(0);
+			try{
+				reader.seek(request.getOffset());
 				int bytesAmount = reader.read(buffer);
 				int offset =sizeOfFiles;
-				/*while (bytesAmount > sizeOfFiles) {
-					Chunk_response.Builder response = Chunk_response.newBuilder();
-					byte[] smallerChunk = new byte[bytesAmount];
-					System.arraycopy(buffer, 0, smallerChunk, 0, bytesAmount);
-
-					response.setOrigin(3);
-					response.setDestination(8);
-					response.setLast(false);
-					response.setPath("wwww");
-
-					response.setOffset(offset);
-					response.setOrigin(request.getOrigin());
-					response.setPayload(ByteString.copyFrom(smallerChunk));
-
-					route.Chunk_response rtn = builder.build();
-
-					responseObserver.onNext(rtn);
-					responseObserver.onCompleted();
-					bytesAmount-=sizeOfFiles;
-					offset += sizeOfFiles;
-				}*/
-				//if(bytesAmount < sizeOfFiles){
-					Chunk_response.Builder response = Chunk_response.newBuilder();
+				System.out.println(" - " + sizeOfFiles + " - " + bytesAmount + " RTT - " + request.getResponseTime() + " CZ " + sizeOfFiles);
 
 					byte[] smallerChunk = new byte[bytesAmount];
 					System.arraycopy(buffer, 0, smallerChunk, 0, bytesAmount);
@@ -159,20 +127,23 @@ public class RouteServerImpl extends RequestServiceGrpc.RequestServiceImplBase {
 
 					response.setOrigin(3);
 					response.setDestination(8);
-					response.setLast(false);
+					if(bytesAmount< sizeOfFiles){
+						response.setLast(true);
+					} else {
+						response.setLast(false);
+					}
 					response.setPath("wwww");
 
 					response.setOffset(offset);
 					response.setOrigin(request.getOrigin());
 
-					System.out.println(" --- "+ bytesAmount+"  --- "+smallerChunk);
 					response.setPayload(ByteString.copyFrom(smallerChunk));
 					System.out.println(response.getPayload().toStringUtf8());
 					route.Chunk_response rtn = response.build();
 
 					responseObserver.onNext(rtn);
 					responseObserver.onCompleted();
-				//}
+
 				reader.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -181,7 +152,5 @@ public class RouteServerImpl extends RequestServiceGrpc.RequestServiceImplBase {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
 		}
-
-
 	}
 }
