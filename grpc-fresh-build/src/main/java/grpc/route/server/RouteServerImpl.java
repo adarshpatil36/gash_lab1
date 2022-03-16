@@ -118,20 +118,23 @@ public class RouteServerImpl extends RequestServiceGrpc.RequestServiceImplBase {
 			try{
 				reader.seek(request.getOffset());
 				int bytesAmount = reader.read(buffer);
-				int offset =sizeOfFiles;
+				int offset;
+				int chunkSize;
 				System.out.println(" - " + sizeOfFiles + " - " + bytesAmount + " RTT - " + request.getResponseTime() + " CZ " + sizeOfFiles);
 
-					byte[] smallerChunk = new byte[bytesAmount];
+					if(bytesAmount< sizeOfFiles){
+						chunkSize = bytesAmount;
+						response.setLast(true);
+					} else {
+						chunkSize = sizeOfFiles;
+						response.setLast(false);
+					}
+					byte[] smallerChunk = new byte[chunkSize];
 					System.arraycopy(buffer, 0, smallerChunk, 0, bytesAmount);
 					offset = bytesAmount;
 
 					response.setOrigin(3);
 					response.setDestination(8);
-					if(bytesAmount< sizeOfFiles){
-						response.setLast(true);
-					} else {
-						response.setLast(false);
-					}
 					response.setPath("wwww");
 
 					response.setOffset(offset);

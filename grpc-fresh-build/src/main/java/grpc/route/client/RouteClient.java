@@ -37,7 +37,7 @@ public class RouteClient {
 		FileOutputStream os = new FileOutputStream("/Users/adarshpatil/Documents/Masters/Sem 2/275 Gash/Lab 1/Fresh Build/grpc-fresh-build/src/main/java/grpc/route/client/newFile");
 
 		int i = 0;
-		long Threshold_RTT = 10;
+		long Threshold_RTT = 12;
 		int Chunk_Size = 5;
 		int Threshold_Chunk_Size = 5;
 
@@ -62,6 +62,8 @@ public class RouteClient {
 			isLast = r.getLast();
 			Timestamp timestamp2 = new Timestamp(System.currentTimeMillis());
 			RTT_Time = timestamp2.getTime() - timestamp1.getTime();
+
+			System.out.println(" - RTT_Time " + RTT_Time + " - Chunk_Size" + Chunk_Size );
 
 
 			if(RTT_Time > Threshold_RTT){
